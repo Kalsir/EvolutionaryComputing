@@ -12,7 +12,7 @@ public class player73 implements ContestSubmission
 	private int evaluations_limit_;
 
 	// Parameters
-	private int population_size = 100;
+	private int population_size = 100; //higher or lower may be better.
 	private int generation_size = 100;
 	private double mutation_prob = 1;
 	private double mutation_sd = 0.5;
@@ -94,6 +94,8 @@ public class player73 implements ContestSubmission
 				// Select parents
 				int parent1 = population_size -1;
 				int parent2 = population_size -2;
+				int parent3 = population_size -3;
+				int parent4 = population_size -4;
 
 				// Create child genotype
 				double child_genotype[] = new double[10];
@@ -101,8 +103,10 @@ public class player73 implements ContestSubmission
 				// Recombination
 				for (int i = 0; i < 10; i++){
 					child_genotype[i] += population[parent1].getGenotype()[i];
-					child_genotype[i] += population[parent2].getGenotype()[i];
-					child_genotype[i] /= 2;
+					//child_genotype[i] += population[parent2].getGenotype()[i];
+					//child_genotype[i] += population[parent3].getGenotype()[i];
+					//child_genotype[i] += population[parent4].getGenotype()[i];
+					//child_genotype[i] /= 4;
 				}
 
 				// Mutation

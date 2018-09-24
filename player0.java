@@ -54,7 +54,7 @@ public class player0 implements ContestSubmission
         while(evals<evaluations_limit_){
             // Select parents
             // Apply crossover / mutation operators
-            double child[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+            double child[] = {0.0,0.0,0.5,0.0,0.5,0.0,0.0,0.0,0.0,0.0};
             // Check fitness of unknown fuction
             Double fitness = (double) evaluation_.evaluate(child);
             evals++;
