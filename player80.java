@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.Properties;
 import java.util.Arrays;
 
-public class player73 implements ContestSubmission
+public class player80 implements ContestSubmission
 {
 	Random rnd_;
 	ContestEvaluation evaluation_;
@@ -17,7 +17,7 @@ public class player73 implements ContestSubmission
 	private double mutation_prob = 1;
 	private double mutation_sd = 0.5;
 
-	public player73()
+	public player80()
 	{
 		rnd_ = new Random();
 	}
@@ -88,6 +88,12 @@ public class player73 implements ContestSubmission
 			// Create array to hold offspring
 			Individual offspring[] = new Individual[generation_size];
 
+			double total_fitness = 0;
+			for (int i = 0; i < population_size; i++){
+				total_fitness += population[i].getFitness();
+			}
+			double average_fitness = total_fitness/population_size;
+
 			// Create offspring
 			for (int j = 0; j < generation_size; j++)
 			{
@@ -101,12 +107,17 @@ public class player73 implements ContestSubmission
 				double child_genotype[] = new double[10];
 
 				// Recombination
+				double total_weight = 0;
 				for (int i = 0; i < 10; i++){
-					child_genotype[i] += population[parent1].getGenotype()[i];
-					child_genotype[i] += population[parent2].getGenotype()[i];
-					child_genotype[i] += population[parent3].getGenotype()[i];
-					child_genotype[i] += population[parent4].getGenotype()[i];
-					child_genotype[i] /= 4;
+					for (int k = 0; k < population_size; k++){
+						if (population[k].getFitness() > average_fitness)
+						{
+							child_genotype[i] += population[k].getGenotype()[i] * (population[k].getFitness() - average_fitness);
+							total_weight += population[k].getFitness() - average_fitness;
+						}
+					}
+					child_genotype[i] /= total_weight;
+					System.out.println(child_genotype[i]);
 				}
 
 				// Mutation

@@ -4,8 +4,9 @@ import org.vu.contest.ContestEvaluation;
 import java.util.Random;
 import java.util.Properties;
 import java.util.Arrays;
+import java.util.ArrayList;
 
-public class player73 implements ContestSubmission
+public class player79 implements ContestSubmission
 {
 	Random rnd_;
 	ContestEvaluation evaluation_;
@@ -16,8 +17,9 @@ public class player73 implements ContestSubmission
 	private int generation_size = 100;
 	private double mutation_prob = 1;
 	private double mutation_sd = 0.5;
+	private double taboo_distance = 2;
 
-	public player73()
+	public player79()
 	{
 		rnd_ = new Random();
 	}
@@ -51,9 +53,19 @@ public class player73 implements ContestSubmission
 		}
 	}
 
+	public double distance(double genotype1[], double genotype2[])
+	{
+		double sum_of_squares = 0;
+		for(int i=0; i<10; i++)
+    		sum_of_squares += Math.pow(genotype1[i] - genotype2[i], 2);
+    	return Math.sqrt(sum_of_squares);
+	}
+
 	public void run()
 	{
+		System.out.println(evaluations_limit_);
 		// Initialize population and fill it with random individuals
+		double total_initial_fitness = 0;
 		Individual population[] = new Individual[population_size];
 		for(int i = 0; i < population_size; i++)
 		{
@@ -63,7 +75,16 @@ public class player73 implements ContestSubmission
 				genotype[j] = rnd_.nextDouble() * 10 - 5;
 			}
 			double fitness = (double) evaluation_.evaluate(genotype);
+			total_initial_fitness += fitness;
 			population[i] = new Individual(genotype, fitness);
+		}
+		double average_initial_fitness = total_initial_fitness/population_size;
+
+		ArrayList<Individual> taboo_list = new ArrayList<Individual>();
+		for(int i = 0; i < population_size; i++)
+		{
+			if (population[i].getFitness() < average_initial_fitness)
+				taboo_list.add(population[i]);
 		}
 
 		// We evaluated once for each starting individual
@@ -110,20 +131,37 @@ public class player73 implements ContestSubmission
 				}
 
 				// Mutation
-				for (int i = 0; i < 10; i++){
-					double rnd = rnd_.nextDouble();
-					if (rnd < mutation_prob)
-						child_genotype[i] = Math.max(-5, Math.min(5, child_genotype[i] + rnd_.nextGaussian() * mutation_sd));
+				boolean accepted = false;
+				while (!accepted)
+				{
+					for (int i = 0; i < 10; i++){
+						double rnd = rnd_.nextDouble();
+						if (rnd < mutation_prob)
+							child_genotype[i] = Math.max(-5, Math.min(5, child_genotype[i] + rnd_.nextGaussian() * mutation_sd));
+					}
+					accepted = true;
+					for (int i = 0; i < taboo_list.size(); i++){
+						if (distance(child_genotype, taboo_list.get(i).getGenotype()) < taboo_distance)
+						{
+							System.out.println("taboo!");
+							accepted = false;
+						}
+							
+					}
 				}
 
 				// Evaluate new child
 				double child_fitness = (double) evaluation_.evaluate(child_genotype);
+				Individual child = new Individual(child_genotype, child_fitness);
+
+				if (child_fitness < average_initial_fitness)
+					taboo_list.add(child);
 				if (child_fitness > best_score) {
 					best_score = child_fitness;
 					mutation_sd = 0.5 - best_score/20;
 					System.out.println("Score update: " + Double.toString(best_score));
 				}
-				offspring[j] = new Individual(child_genotype, child_fitness);
+				offspring[j] = child;
 			}
 
 			// Replace weakest individuals

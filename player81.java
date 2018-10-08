@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.Properties;
 import java.util.Arrays;
 
-public class player73 implements ContestSubmission
+public class player81 implements ContestSubmission
 {
 	Random rnd_;
 	ContestEvaluation evaluation_;
@@ -14,10 +14,11 @@ public class player73 implements ContestSubmission
 	// Parameters
 	private int population_size = 100; //higher or lower may be better.
 	private int generation_size = 100;
-	private double mutation_prob = 1;
-	private double mutation_sd = 0.5;
 
-	public player73()
+	private double tau_prime = 0.224; //proportional to 0.224
+	private double tau = 0.398; //proportional to 0.398
+
+	public player81()
 	{
 		rnd_ = new Random();
 	}
@@ -62,8 +63,16 @@ public class player73 implements ContestSubmission
 			{
 				genotype[j] = rnd_.nextDouble() * 10 - 5;
 			}
+
+			double mutation_genotype[] = new double[10];
+			for(int j=0; j<10; j++)
+			{
+				mutation_genotype[j] = rnd_.nextDouble() * 2;
+			}
+
+
 			double fitness = (double) evaluation_.evaluate(genotype);
-			population[i] = new Individual(genotype, fitness);
+			population[i] = new Individual(genotype, fitness, mutation_genotype);
 		}
 
 		// We evaluated once for each starting individual
@@ -75,7 +84,6 @@ public class player73 implements ContestSubmission
 		// Report best score in initial population
 		double best_score = population[population_size - 1].getFitness();
 		System.out.println("Best initial score: " + Double.toString(best_score));
-		mutation_sd = 0.5 - best_score/20;
 
 		// Run evolutionary algorithm
 		while(evals<evaluations_limit_)
@@ -91,36 +99,36 @@ public class player73 implements ContestSubmission
 			// Create offspring
 			for (int j = 0; j < generation_size; j++)
 			{
-				// Select parents
-				int parent1 = population_size -1;
-				int parent2 = population_size -2;
-				int parent3 = population_size -3;
-				int parent4 = population_size -4;
-
 				// Create child genotype
 				double child_genotype[] = new double[10];
+				double child_mutation_genotype = new double[10];
 
 				// Recombination
 				for (int i = 0; i < 10; i++){
-					child_genotype[i] += population[parent1].getGenotype()[i];
-					child_genotype[i] += population[parent2].getGenotype()[i];
-					child_genotype[i] += population[parent3].getGenotype()[i];
-					child_genotype[i] += population[parent4].getGenotype()[i];
+					for (int k = 0; k < 4; k++){
+						child_genotype[i] += population[population_size - k - 1].getGenotype()[i];
+					}
 					child_genotype[i] /= 4;
+
+					for (int k = 0; k < 4; k++){
+						child_mutation_genotype[i] += population[population_size - k - 1].getGenotype()[i];
+					}
+					child_mutation_genotype[i] /= 4;
+				}
 				}
 
 				// Mutation
 				for (int i = 0; i < 10; i++){
-					double rnd = rnd_.nextDouble();
-					if (rnd < mutation_prob)
-						child_genotype[i] = Math.max(-5, Math.min(5, child_genotype[i] + rnd_.nextGaussian() * mutation_sd));
+					child_mutation_genotype[i] = child_mutation_genotype[i] * Math.pow(Math.E, rnd_.nextGaussian() * tau_prime + rnd_.nextGaussian() * tau);
+				}
+				for (int i = 0; i < 10; i++){
+					child_genotype[i] = Math.max(-5, Math.min(5, child_genotype[i] + rnd_.nextGaussian() * child_mutation_genotype[i]));
 				}
 
 				// Evaluate new child
 				double child_fitness = (double) evaluation_.evaluate(child_genotype);
 				if (child_fitness > best_score) {
 					best_score = child_fitness;
-					mutation_sd = 0.5 - best_score/20;
 					System.out.println("Score update: " + Double.toString(best_score));
 				}
 				offspring[j] = new Individual(child_genotype, child_fitness);
